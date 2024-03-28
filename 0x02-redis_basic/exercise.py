@@ -3,15 +3,26 @@
 import redis
 from typing import Union, Optional, Callable
 import uuid
+import functools
 
+
+def count_calls(fn):
+    """decorator count number of calls of methods in cache class"""
+    @functools.wraps(fn)
+    def wrapper(self, data):
+        self._redis.incr(fn.__qualname__)
+        result = fn(self, data)
+        return result
+    return wrapper
 
 class Cache:
     """provides caching using redis store"""
     def __init__(self) -> None:
         """Initializes cache class"""
-        self._redis = redis.Redis(password='foobared')
+        self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """ Generates a key and stores the data in redis"""
         key: str = str(uuid.uuid4())
@@ -19,7 +30,7 @@ class Cache:
 
         return key
 
-    def get(self, key: str, fn: Optional[Callable[[], None]]) -> Union[
+    def get(self, key: str, fn: Optional[Callable[[], None]]=None) -> Union[
             str, int, float, list, None]:
         """Gets a value for the key in the redis store"""
         data: Union[str, int, float, list, None] = self._redis.get(key)
