@@ -19,7 +19,8 @@ class Cache:
 
         return key
 
-    def get(self, key: str, fn: Optional[Callable[[], None]]) ->  Union[str, int, float, list, None]:
+    def get(self, key: str, fn: Optional[Callable[[], None]]) -> Union[
+            str, int, float, list, None]:
         """Gets a value for the key in the redis store"""
         data: Union[str, int, float, list, None] = self._redis.get(key)
         if data is None or fn is None:
