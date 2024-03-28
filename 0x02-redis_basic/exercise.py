@@ -25,7 +25,10 @@ class Cache:
         data: Union[str, int, float, list, None] = self._redis.get(key)
         if data is None or fn is None:
             return data
-        return fn(data)
+        try:
+            return fn(data)
+        except ValueError:
+            return None
 
     def get_str(self, data: bytes) -> str:
         """returns data as str"""
