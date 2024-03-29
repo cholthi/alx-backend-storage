@@ -6,20 +6,22 @@ import uuid
 import functools
 
 
-def count_calls(fn):
+def count_calls(method: Callable) -> Callable:
     """decorator count number of calls of methods in cache class"""
-    @functools.wraps(fn)
-    def wrapper(self, data):
-        self._redis.incr(fn.__qualname__)
-        result = fn(self, data)
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if isinstance(self._redis, redis.Redis):
+            self._redis.incr(method.__qualname__)
+        result = method(self, *args, **kwargs)
         return result
     return wrapper
+
 
 class Cache:
     """provides caching using redis store"""
     def __init__(self) -> None:
         """Initializes cache class"""
-        self._redis = redis.Redis()
+        self._redis = redis.Redis(password='foobared')
         self._redis.flushdb()
 
     @count_calls
@@ -30,24 +32,18 @@ class Cache:
 
         return key
 
-    def get(self, key: str, fn: Optional[Callable[[], None]]=None) -> Union[
-            str, int, float, list, None]:
+    def get(self, key: str, fn: Callable = None) -> Union[
+            str, int, float,  None]:
         """Gets a value for the key in the redis store"""
         data: Union[str, int, float, list, None] = self._redis.get(key)
-        if data is None or fn is None:
+        if fn is None:
             return data
-        try:
-            return fn(data)
-        except ValueError:
-            return None
+        return fn(data)
 
     def get_str(self, data: bytes) -> str:
         """returns data as str"""
-        return data.decode('utf8')
+        return self.get(data, lambda d: d.decode('utf8'))
 
     def get_int(self, data: bytes) -> Union[int, None]:
         """returns data as int"""
-        try:
-            return int(data)
-        except ValueError:
-            return None
+        return self.get(data, lambda d: int(d))
