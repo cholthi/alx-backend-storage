@@ -59,7 +59,7 @@ class Cache:
     """provides caching using redis store"""
     def __init__(self) -> None:
         """Initializes cache class"""
-        self._redis = redis.Redis(password='foobared')
+        self._redis = redis.Redis()
         self._redis.flushdb()
 
     @call_history
