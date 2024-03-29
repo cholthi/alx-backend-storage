@@ -5,13 +5,15 @@ import redis
 from functools import wraps
 from typing import Callable
 
+store = redis.Redis()
+"""Redis instance"""
+
 
 def count_hits(fn: Callable) -> Callable:
     """Tracks how many times a url was hit in fn"""
-    store = redis.Redis(password='foobared')
 
     @wraps(fn)
-    def wrapper(url):
+    def wrapper(url) -> str:
         key = 'count:{}'.format(url)
         store.incr(key)
         result = store.get('cache:{}'.format(url))
