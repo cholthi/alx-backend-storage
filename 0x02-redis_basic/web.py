@@ -11,19 +11,21 @@ store = redis.Redis()
 
 def count_hits(fn: Callable) -> Callable:
     """Tracks how many times a url was hit in fn"""
-
+    '''Caches the output of fetched data
+    '''
     @wraps(fn)
-    def wrapper(url) -> str:
-        key = 'count:{}'.format(url)
-        store.incr(key)
-        result = store.get('cache:{}'.format(url))
+    def invoker(url) -> str:
+        '''The wrapper function for caching the output
+        '''
+        store.incr(f'count:{url}')
+        result = store.get(f'result:{url}')
         if result:
-            return result.decode('utf8')
+            return result.decode('utf-8')
         result = fn(url)
-        store.set('count:{}'.format(url), 0)
-        store.set('cache:{}'.format(url), result, ex=10)
+        store.set(f'count:{url}', 0)
+        store.setex(f'result:{url}', 10, result)
         return result
-    return wrapper
+    return invoker
 
 
 @count_hits
