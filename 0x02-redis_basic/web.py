@@ -16,9 +16,9 @@ def count_hits(fn: Callable) -> Callable:
         store.incr(key)
         result = store.get('cache:{}'.format(url))
         if result:
-            return result
+            return result.decode('utf8')
         result = fn(url)
-        store.incr('count:{}'.format(url))
+        store.set('count:{}'.format(url), 0)
         store.set('cache:{}'.format(url), result, ex=10)
         return result
     return wrapper
